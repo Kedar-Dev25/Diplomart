@@ -10,9 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile; // Important!
+import org.springframework.web.multipart.MultipartFile;
 
-// File Handling ke liye ye imports zaroori hain
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,11 +28,12 @@ public class ProductController {
     @Autowired
     private JavaMailSender mailSender;
 
+    // 1️⃣ Add Product with Image
     @PostMapping("/add")
-    public String addProduct(Product product, 
-                             @RequestParam("imageFile") MultipartFile imageFile, 
+    public String addProduct(Product product,
+                             @RequestParam("imageFile") MultipartFile imageFile,
                              HttpSession session) {
-        
+
         String sellerEmail = (String) session.getAttribute("loggedInUserEmail");
         String sellerName = (String) session.getAttribute("loggedInUserName");
 
@@ -41,27 +41,22 @@ public class ProductController {
 
         try {
             if (!imageFile.isEmpty()) {
-                // Folder path: static/images/ ke andar save hoga
-                String uploadDir = "src/main/resources/static/images/";
-                
-                // Ek unique file name banao taaki same name ki files overwrite na ho
+                // ✅ External folder for runtime access
+                String uploadDir = "uploads/";
                 String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
                 Path path = Paths.get(uploadDir + fileName);
-                
-                // Agar images folder nahi bana hua, toh ye bana dega
+
                 if (!Files.exists(Paths.get(uploadDir))) {
                     Files.createDirectories(Paths.get(uploadDir));
                 }
 
-                // File save karo
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                
-                // DB mein path set karo (Thymeleaf ke liye)
+
+                // DB me runtime-accessible path
                 product.setImagePath("/images/" + fileName);
             }
         } catch (IOException e) {
             e.printStackTrace();
-            // Error handling ke liye yahan logic daal sakte ho
         }
 
         product.setSellerEmail(sellerEmail);
@@ -72,9 +67,7 @@ public class ProductController {
         return "redirect:/dashboardSeller";
     }
 
-
-
-
+    // 2️⃣ Buy Product + Email Notification
     @PostMapping("/buy")
     public String buyProduct(@RequestParam Long productId, HttpSession session){
         String buyerEmail = (String) session.getAttribute("loggedInUserEmail");
@@ -85,36 +78,35 @@ public class ProductController {
         if (buyerEmail == null || buyerName == null ) return "redirect:/register";
 
         Product product = productRepository.findById(productId).orElse(null);
-        
-        if (product != null) {
 
-            if(product.getSellerEmail().equals(buyerEmail)) return "redirect:/dashboardBuyer";
+        if (product != null && !product.getSellerEmail().equals(buyerEmail)) {
+            String myAdminEmail = "kedar.code7@gmail.com";
 
-            String myAdminEmail = "kedar.code7@gmail.com"; 
-            
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(myAdminEmail);
             message.setSubject("🔥 New Deal: " + product.getName());
-            message.setText("Bhai, Order aya hai\n\n" +
-                          "Item: " + product.getName() + "\n" +
-                          "Price: ₹" + product.getPrice() + "\n" +
-                          "Seller: " + product.getSellerName() + " (" + product.getSellerEmail() + ")\n" +
-                          "Seller From: " + yr + " year and " + branch + " Branch\n" +
-                          "Buyer: " + buyerName + " (" + buyerEmail + ")");
-            
+            message.setText(
+                "Bhai, Order aya hai\n\n" +
+                "Item: " + product.getName() + "\n" +
+                "Price: ₹" + product.getPrice() + "\n" +
+                "Seller: " + product.getSellerName() + " (" + product.getSellerEmail() + ")\n" +
+                "Seller From: " + yr + " year and " + branch + " Branch\n" +
+                "Buyer: " + buyerName + " (" + buyerEmail + ")"
+            );
+
             mailSender.send(message);
 
-            product.setStatus("PENDING_ADMIN"); 
+            product.setStatus("PENDING_ADMIN");
             productRepository.save(product);
         }
 
         return "redirect:/dashboardBuyer";
     }
 
+    // 3️⃣ Delete Product
     @PostMapping("/product/delete")
     public String deleteProduct(@RequestParam Long id) {
         productRepository.deleteById(id);
         return "redirect:/dashboardSeller";
-    }    
+    }
 }
-    
