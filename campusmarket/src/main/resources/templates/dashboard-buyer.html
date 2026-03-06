@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Buyer Dashboard</title>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 20px;">
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <h2 style="margin: 0;">Welcome, <span th:text="${session.loggedInUserName}"></span></h2>
+
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
+            <form action="/dashboardSeller" method="get">
+                <button type="submit" style="width: 140px; cursor: pointer;">💵 Switch to Selling </button>
+            </form>
+            <form action="/api/auth/logout" method="post">
+                <button type="submit" style="width: 140px; cursor: pointer;">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <hr>
+
+    <h3>Available Equipment</h3>
+    
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        
+                <div th:each="p : ${availableProducts}" 
+            style="border: 1px solid #ccc; padding: 10px; width: 180px; 
+                    display: flex; flex-direction: column; justify-content: space-between; height: 280px;">
+            
+            <div>
+                <img th:src="${p.imagePath != null ? p.imagePath : '/images/default.jpg'}" 
+                    style="width: 100%; height: 120px; object-fit: cover;">
+                <h4 th:text="${p.name}" style="margin: 10px 0 5px 0;">Name</h4>
+                <p th:text="${p.description}" style="font-size: 12px; margin: 0;">Description</p>
+                <p><strong>Price: ₹<span th:text="${p.price}">0</span></strong></p>
+            </div>
+
+            <form action="/api/products/buy" method="post">
+                <input type="hidden" name="productId" th:value="${p.id}">
+                <button type="submit" style="width: 100%; cursor: pointer;">Buy Now</button>
+            </form>
+        </div>
+        <p th:if="${#lists.isEmpty(availableProducts)}">No items available.</p>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Registration</h2>
+    <h4>Create Your Account to Buy</h4>
+    <form action="/api/auth/register" method="post">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+
+       <label>Branch:</label><br>
+<select name="branch" required>
+    <option value="CSE">CSE</option>
+    <option value="ECE">ECE</option>
+    <option value="ME">ME</option>
+</select><br><br>
+
+        <label>Year:</label><br>
+        <select name="yr" required>
+            <option value="1">1st yr</option>
+            <option value="2">2nd yr</option>
+            <option value="3">3rd yr</option>
+        </select><br><br>
+
+        <button type="submit">Register</button>
+    </form>
+</body>
+</html>
